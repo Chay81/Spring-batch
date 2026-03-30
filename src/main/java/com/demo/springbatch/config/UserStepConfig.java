@@ -6,7 +6,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
@@ -19,9 +19,9 @@ public class UserStepConfig {
     @Bean
     public TaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);     // number of threads
-        executor.setMaxPoolSize(4);
-        executor.setQueueCapacity(100);
+        executor.setCorePoolSize(8);     // number of threads
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("batch-thread-");
         executor.initialize();
         return executor;
@@ -32,16 +32,18 @@ public class UserStepConfig {
                          PlatformTransactionManager txManager,
                          ItemReader<User> reader,
                          ItemProcessor<User, User> processor,
-                         JdbcBatchItemWriter<User> writer) {
+                         ItemWriter<User> loggingWriter) {
 
         return new StepBuilder("user-step", jobRepository)
                 .<User, User>chunk(1000, txManager)// increased chunk size for better performance, later we can adjust based on testing
                 .reader(reader)
                 .processor(processor)
-                .writer(writer)
+                .writer(loggingWriter)
                 .faultTolerant()
                 .skipLimit(10000)
                 .skip(Exception.class) // specific exception
+                .taskExecutor(taskExecutor()) // enable multi-threading
                 .build();
     }
+
 }
