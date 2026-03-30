@@ -44,3 +44,9 @@ input:
   file:
     path: users.csv
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
