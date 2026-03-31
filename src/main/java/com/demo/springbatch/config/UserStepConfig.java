@@ -10,6 +10,7 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -41,7 +42,7 @@ public class UserStepConfig {
                 .writer(loggingWriter) // loggingWriter already prints thread + chunk size
                 .faultTolerant()
                 .skipLimit(10000)
-                .skip(Exception.class) // specific exception
+                .skip(DataIntegrityViolationException.class) // specific exception
                 .taskExecutor(taskExecutor()) // enable multi-threading
                 .build();
     }

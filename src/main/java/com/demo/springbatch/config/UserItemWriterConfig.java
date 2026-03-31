@@ -25,6 +25,7 @@ public class UserItemWriterConfig {
         writer.setItemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>());
         writer.setSql("INSERT INTO users (name, email) VALUES (:name, :email)");
         writer.setDataSource(dataSource);
+        writer.afterPropertiesSet(); // IMPORTANT
         return writer;
     }
 
@@ -32,11 +33,9 @@ public class UserItemWriterConfig {
     public ItemWriter<User> loggingWriter(JdbcBatchItemWriter<User> writer) {
         return items -> {
             writer.write(items); // write to DB
-            if (!items.isEmpty() && items.size() % 1000 == 0) {
-                log.info("Thread {} wrote 1 row. Total items processed" +
-                                " in this batch: {}", Thread.currentThread().getName(),
-                        items.size());
-            }
+            log.info("Thread {} wrote {} records in this chunk",
+                    Thread.currentThread().getName(),
+                    items.size());
         };
     }
 }
