@@ -33,13 +33,15 @@ public class UserStepConfig {
                          PlatformTransactionManager txManager,
                          ItemReader<User> reader,
                          DuplicateSkippingProcessor processor,
-                         ItemWriter<User> loggingWriter) {
+                         ItemWriter<User> loggingWriter,
+                         ItemWriter<User> metricsWriter) {
 
         return new StepBuilder("user-step", jobRepository)
                 .<User, User>chunk(1000, txManager)// increased chunk size for better performance, later we can adjust based on testing
                 .reader(reader)
                 .processor(processor) // use DuplicateSkippingProcessor
                 .writer(loggingWriter) // loggingWriter already prints thread + chunk size
+                .writer(metricsWriter) // metricsWriter wraps loggingWriter and records metrics
                 .faultTolerant()
                 .skipLimit(10000)
                 .skip(DataIntegrityViolationException.class) // specific exception
