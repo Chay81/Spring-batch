@@ -1,20 +1,14 @@
-package com.demo.springbatch.config;
+//package com.demo.springbatch.config;
 
-import com.demo.springbatch.model.User;
-import org.springframework.batch.core.Step;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemWriter;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.task.TaskExecutor;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.transaction.PlatformTransactionManager;
-
+/*
 @Configuration
+@Deprecated
+*/
+/*
+Note: This class is deprecated as it is class for single thread processing,
+* we have moved to the next step for partitioning the files from users.csv
+* *//*
+
 public class UserStepConfig {
 
     @Bean
@@ -49,4 +43,4 @@ public class UserStepConfig {
                 .build();
     }
 
-}
+}*/

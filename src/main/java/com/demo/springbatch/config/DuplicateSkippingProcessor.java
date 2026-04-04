@@ -8,7 +8,6 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
@@ -17,13 +16,13 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DuplicateSkippingProcessor implements ItemProcessor<User, User> {
 
     // thread-safe set for multi-threaded step
-    private final Set<String> seenEmails = ConcurrentHashMap.newKeySet();
+    private final Set<String> globalEmailSet; // shared across all threads
     private final MeterRegistry meterRegistry;
     private final AtomicLong duplicateCounter = new AtomicLong(0);
 
     @Override
     public User process(User item) {
-        if (!seenEmails.add(item.getEmail())) {
+        if (!globalEmailSet.add(item.getEmail())) {
             long count = duplicateCounter.incrementAndGet();
 
             // Log duplicate with thread info
@@ -32,21 +31,12 @@ public class DuplicateSkippingProcessor implements ItemProcessor<User, User> {
             // Increment Prometheus counter
             meterRegistry.counter(
                     "batch.duplicates.skipped",   // Actuator-friendly name
-                    "thread", Thread.currentThread().getName(),
-                    "step", "userStep"
+                    "thread", Thread.currentThread().getName()
             ).increment();
 
-//            synchronized(System.out) {
-//                log.info("Skipping duplicate: {} by thread {}", item.getEmail(),
-//                        Thread.currentThread().getName());
-//                System.out.flush();
-//            }
             return null;
         }
         return item;
     }
 
-    public long getDuplicateCount() {
-        return duplicateCounter.get();
-    }
 }

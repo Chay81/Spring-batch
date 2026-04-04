@@ -13,13 +13,20 @@ import org.springframework.context.annotation.Configuration;
 public class UserJobConfig {
 
     private final JobRepository jobRepository;
-    private final Step userStep;
+//    private final Step userStep;
+    private final Step masterStep;
+
+//    @Bean
+//    public Job importUserJob() {
+//        return new JobBuilder("importUserJob", jobRepository)
+//                .start(userStep)
+//                .build();
+//    }
 
     @Bean
     public Job importUserJob() {
         return new JobBuilder("importUserJob", jobRepository)
-                .start(userStep)
+                .start(masterStep)
                 .build();
     }
-
 }

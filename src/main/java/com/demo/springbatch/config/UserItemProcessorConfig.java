@@ -1,13 +1,9 @@
 package com.demo.springbatch.config;
 
 import com.demo.springbatch.model.User;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Configuration
 public class UserItemProcessorConfig {

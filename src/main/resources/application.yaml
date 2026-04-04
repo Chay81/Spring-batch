@@ -38,7 +38,7 @@ spring:
 logging:
   level:
     root: INFO
-    org.springframework.batch: DEBUG
+    org.springframework.batch: INFO
 
 input:
   file:
@@ -52,8 +52,10 @@ management:
   metrics:
     enabled:
         all: true
+    tags:
+      application: spring-batch-app
     enable:
-      spring.batch: true
+      spring.batch: false
     export:
       prometheus:
         enabled: true
