@@ -35,7 +35,7 @@ public class MetricsItemWriter implements ItemWriter<User> {
 
     @PostConstruct
     public void init() {
-//        totalWritesCounter = meterRegistry.counter("batch_db_writes_total");
+        totalWritesCounter = meterRegistry.counter("batch_db_writes_total");
 
         // Register gauges ONCE
         meterRegistry.gauge("batch.active.threads", activeThreads);
