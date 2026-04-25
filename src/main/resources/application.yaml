@@ -41,8 +41,7 @@ logging:
     org.springframework.batch: INFO
 
 input:
-  file:
-    path: users.csv
+  dir: ${INPUT_DIR:input}
 
 management:
   endpoints:

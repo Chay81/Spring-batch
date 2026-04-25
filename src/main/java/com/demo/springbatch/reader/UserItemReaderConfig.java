@@ -11,10 +11,10 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import javax.sql.DataSource;
+import java.nio.file.Paths;
 
 @Configuration
 @Slf4j
@@ -26,12 +26,17 @@ public class UserItemReaderConfig {
     @Bean
     @StepScope
     public FlatFileItemReader<User> reader(
-            @Value("#{stepExecutionContext['fileName']}") Resource resource) {
+            @Value("#{stepExecutionContext['fileName']}") Resource resource,
+            @Value("${input.dir}") String inputDir) {
+
+        String fullPath = Paths.get(inputDir, resource.getFilename()).toString();
+
+        log.info("Reading file: {}", resource.getFilename());
+        log.info("Path: {}", fullPath);
 
         FlatFileItemReader<User> reader = new FlatFileItemReader<>();
-//        reader.setResource(new ClassPathResource("users.csv"));
         reader.setResource(resource);
-        reader.setLinesToSkip(1); // skip header
+        reader.setLinesToSkip(1);
 
         DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();
         tokenizer.setNames("name", "email");
