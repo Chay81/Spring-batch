@@ -9,11 +9,14 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.FlatFileParseException;
+import org.springframework.batch.item.file.transform.IncorrectTokenCountException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -43,7 +46,8 @@ public class BatchConfig {
                             PlatformTransactionManager txManager,
                             FlatFileItemReader<User> reader,
                             DuplicateSkippingProcessor processor,
-                            ItemWriter<User> metricsItemWriter) {
+                            ItemWriter<User> metricsItemWriter,
+                            FileMoveListener listener) {
 
         return new StepBuilder("loadCsvStep", jobRepository)
 //                .<User, User>chunk(1000, txManager)// for testing with 100 records
@@ -51,32 +55,37 @@ public class BatchConfig {
                 .reader(reader)      // CSV used here
                 .processor(processor)
                 .writer(metricsItemWriter)     // insert into DB
+                .listener(listener)   // move file after processing
                 .faultTolerant()
-                .skipLimit(100000)
+                .skipLimit(1000)
                 .skip(DataIntegrityViolationException.class)
+                .skip(FlatFileParseException.class)
+                .skip(IncorrectTokenCountException.class)
                 .build();
     }
 
     @Bean
     @StepScope
     public MultiResourcePartitioner partitioner(
-            @Value("#{jobParameters['fileName']}") String fileName,
-            @Value("${input.dir}") String inputDir) throws IOException {
+            @Value("${app.input-dir}") String inputDir) throws IOException {
 
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
 
-        String fullPath = Paths.get(inputDir, fileName).toString();
+        Resource[] resources = new PathMatchingResourcePatternResolver()
+                .getResources("file:" + inputDir + "/users_*.csv");
 
-        Resource resource = new FileSystemResource(fullPath);
+        log.info("Number of files found: {}", resources.length);
 
-        log.info("Processing file: {}", fullPath);
-        log.info("Number of files found: {}", fileName);
+        for (Resource resource : resources) {
+            log.info("Found file: {}", resource.getFilename());
+        }
 
-        partitioner.setResources(new Resource[]{resource});
-        partitioner.setKeyName("fileName");
+        partitioner.setResources(resources);
+        partitioner.setKeyName("file");
 
         return partitioner;
     }
+
 
     @Bean
     public Step masterStep(JobRepository jobRepository,

@@ -40,8 +40,12 @@ logging:
     root: INFO
     org.springframework.batch: INFO
 
-input:
-  dir: ${INPUT_DIR:input}
+#input:
+#  dir: ${INPUT_DIR:input}
+
+app:
+  input-dir: ./input
+  archive-dir: ./archive
 
 management:
   endpoints:

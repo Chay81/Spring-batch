@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 
 import javax.sql.DataSource;
-import java.nio.file.Paths;
 
 @Configuration
 @Slf4j
@@ -26,16 +25,11 @@ public class UserItemReaderConfig {
     @Bean
     @StepScope
     public FlatFileItemReader<User> reader(
-            @Value("#{stepExecutionContext['fileName']}") Resource resource,
-            @Value("${input.dir}") String inputDir) {
-
-        String fullPath = Paths.get(inputDir, resource.getFilename()).toString();
-
-        log.info("Reading file: {}", resource.getFilename());
-        log.info("Path: {}", fullPath);
+            @Value("#{stepExecutionContext['file']}") Resource resource){
 
         FlatFileItemReader<User> reader = new FlatFileItemReader<>();
         reader.setResource(resource);
+        reader.setStrict(false);
         reader.setLinesToSkip(1);
 
         DelimitedLineTokenizer tokenizer = new DelimitedLineTokenizer();
