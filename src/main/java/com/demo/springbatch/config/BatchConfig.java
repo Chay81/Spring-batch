@@ -14,7 +14,6 @@ import org.springframework.batch.item.file.transform.IncorrectTokenCountExceptio
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.task.TaskExecutor;
@@ -23,7 +22,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 
 @Configuration
 @Slf4j
@@ -50,7 +48,6 @@ public class BatchConfig {
                             FileMoveListener listener) {
 
         return new StepBuilder("loadCsvStep", jobRepository)
-//                .<User, User>chunk(1000, txManager)// for testing with 100 records
                 .<User, User>chunk(10000, txManager)// for testing with 1 million records
                 .reader(reader)      // CSV used here
                 .processor(processor)
@@ -100,6 +97,16 @@ public class BatchConfig {
 //                .gridSize(cores)  // use number of CPU cores
                 .gridSize(10) // number of parallel threads
                 .taskExecutor(taskExecutorService)
+                .build();
+    }
+
+    @Bean
+    public Step moveFilesStep(JobRepository jobRepository,
+                              PlatformTransactionManager txManager,
+                              FileMoveTasklet tasklet) {
+
+        return new StepBuilder("moveFilesStep", jobRepository)
+                .tasklet(tasklet, txManager)
                 .build();
     }
 

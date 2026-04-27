@@ -1,0 +1,65 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: springbatch
+
+  jpa:
+     hibernate:
+       ddl-auto: update
+     defer-datasource-initialization: true
+
+  sql:
+     init:
+       mode: always
+       continue-on-error: true
+       schema-locations: classpath:/schema-h2.sql
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+      hikari:
+        maximum-pool-size: 20
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
+
+logging:
+  level:
+    root: INFO
+    org.springframework.batch: INFO
+
+#input:
+#  dir: ${INPUT_DIR:input}
+
+app:
+  input-dir: ./input
+  archive-dir: ./archive
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    enabled:
+        all: true
+    tags:
+      application: spring-batch-app
+    enable:
+      spring.batch: false
+    export:
+      prometheus:
+        enabled: true
+

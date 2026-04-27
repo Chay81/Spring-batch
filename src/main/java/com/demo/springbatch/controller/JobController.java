@@ -23,6 +23,6 @@ public class JobController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body("Job started successfully");
+                .body("Job Completed successfully");
     }
 }

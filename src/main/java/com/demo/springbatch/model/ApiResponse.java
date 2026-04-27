@@ -1,3 +1,3 @@
 package com.demo.springbatch.model;
 
-public record ApiResponse(String message, boolean success) {}
+public record ApiResponse(String message) {}

@@ -16,7 +16,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .badRequest()
-                .body(new ApiResponse(ex.getMessage(), false));
+                .body(new ApiResponse(ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
@@ -26,6 +26,6 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiResponse("Something went wrong", false));
+                .body(new ApiResponse("Something went wrong"));
     }
 }
