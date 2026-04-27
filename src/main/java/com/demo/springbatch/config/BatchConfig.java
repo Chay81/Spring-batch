@@ -1,7 +1,10 @@
 package com.demo.springbatch.config;
 
+import com.demo.springbatch.model.FileMetadata;
 import com.demo.springbatch.model.User;
+import com.demo.springbatch.repository.FileMetadataRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.SkipListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
@@ -22,6 +25,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Configuration
 @Slf4j
@@ -38,6 +45,16 @@ public class BatchConfig {
         return executor;
     }
 
+    @Bean
+    public SkipListener<User, User> skipListener() {
+        return new SkipListener<>() {
+            @Override
+            public void onSkipInWrite(User item, Throwable t) {
+                System.out.println("❌ Skipped record: " + item + " | Reason: " + t.getMessage());
+            }
+        };
+    }
+
 
     @Bean
     public Step loadCsvStep(JobRepository jobRepository,
@@ -45,16 +62,19 @@ public class BatchConfig {
                             FlatFileItemReader<User> reader,
                             DuplicateSkippingProcessor processor,
                             ItemWriter<User> metricsItemWriter,
-                            FileMoveListener listener) {
+                            SkipListener <User, User> skipListener,
+                            FileMetadataListener fileStepListener){
 
         return new StepBuilder("loadCsvStep", jobRepository)
                 .<User, User>chunk(10000, txManager)// for testing with 1 million records
                 .reader(reader)      // CSV used here
                 .processor(processor)
                 .writer(metricsItemWriter)     // insert into DB
-                .listener(listener)   // move file after processing
+                .listener(skipListener)   // move file after processing
+                .listener(fileStepListener) // update file metadata
                 .faultTolerant()
-                .skipLimit(1000)
+                .skip(Exception.class) // catch all exceptions to prevent job failure
+                .skipLimit(100000)
                 .skip(DataIntegrityViolationException.class)
                 .skip(FlatFileParseException.class)
                 .skip(IncorrectTokenCountException.class)
@@ -64,7 +84,8 @@ public class BatchConfig {
     @Bean
     @StepScope
     public MultiResourcePartitioner partitioner(
-            @Value("${app.input-dir}") String inputDir) throws IOException {
+            @Value("${app.input-dir}") String inputDir,
+            FileMetadataRepository repository) throws IOException {
 
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
 
@@ -72,12 +93,41 @@ public class BatchConfig {
                 .getResources("file:" + inputDir + "/users_*.csv");
 
         log.info("Number of files found: {}", resources.length);
+        List<Resource> filtered = new ArrayList<>();
 
         for (Resource resource : resources) {
-            log.info("Found file: {}", resource.getFilename());
+            String fileName = resource.getFilename();
+
+            Optional<FileMetadata> existing = repository.findByFileName(fileName);
+
+            if (existing.isEmpty()) {
+                // NEW file
+                FileMetadata meta = new FileMetadata();
+                meta.setFileName(fileName);
+                meta.setStatus("NEW");
+                meta.setCreatedAt(LocalDateTime.now());
+                meta.setUpdatedAt(LocalDateTime.now());
+                repository.save(meta);
+
+                filtered.add(resource);
+
+                log.info("NEW file added: {}", fileName);
+
+            } else if ("FAILED".equals(existing.get().getStatus())) {
+                // retry failed
+                filtered.add(resource);
+
+                log.info("Retrying FAILED file: {}", fileName);
+
+            } else {
+                log.info("Skipping already processed file: {}", fileName);
+            }
         }
 
-        partitioner.setResources(resources);
+        log.info("Files selected for processing: {}", filtered.size());
+
+
+        partitioner.setResources(filtered.toArray(new Resource[0])); // IMPORTANT FIX
         partitioner.setKeyName("file");
 
         return partitioner;
@@ -87,14 +137,12 @@ public class BatchConfig {
     @Bean
     public Step masterStep(JobRepository jobRepository,
                            Step loadCsvStep,
-                           MultiResourcePartitioner partitioner,
+                           FilePartitioner partitioner,
                            TaskExecutor taskExecutorService) {
-//        int cores = Runtime.getRuntime().availableProcessors(); // dynamically set grid size
 
         return new StepBuilder("master-step", jobRepository)
                 .partitioner("loadCsvStep", partitioner)
                 .step(loadCsvStep)
-//                .gridSize(cores)  // use number of CPU cores
                 .gridSize(10) // number of parallel threads
                 .taskExecutor(taskExecutorService)
                 .build();

@@ -3,9 +3,7 @@ package com.demo.springbatch.service;
 import com.demo.springbatch.exceptions.NoFileFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -36,6 +34,13 @@ public class JobService {
                 .addLong("time", System.currentTimeMillis())
                 .toJobParameters();
 
-        jobLauncher.run(importUserJob, params);
+
+        JobExecution execution = jobLauncher.run(importUserJob, params);
+
+        if (execution.getStatus() == BatchStatus.FAILED) {
+            throw new RuntimeException("Job FAILED");
+        }
+
+        log.info("Job completed with status: {}", execution.getStatus());
     }
 }

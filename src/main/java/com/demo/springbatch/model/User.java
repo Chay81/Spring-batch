@@ -2,10 +2,9 @@ package com.demo.springbatch.model;
 
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
+import java.util.Objects;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,5 +27,17 @@ public class User {
     public User(String name, String email) {
         this.name = name;
         this.email = email;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
+        return Objects.equals(email, user.email); // or unique field
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(email);
     }
 }

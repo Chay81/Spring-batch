@@ -31,8 +31,8 @@ public class FileMoveTasklet implements Tasklet {
         File dir = new File(inputDir);
         File[] files = dir.listFiles((d, name) -> name.startsWith("users_"));
 
-        if (files == null || files.length == 0) {
-            log.warn("No files to move");
+        if (contribution.getStepExecution().getJobExecution().getStatus().isUnsuccessful()) {
+            log.warn("Job failed. Skipping file move.");
             return RepeatStatus.FINISHED;
         }
 

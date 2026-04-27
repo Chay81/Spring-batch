@@ -33,10 +33,16 @@ public class UserItemWriterConfig {
     @Bean
     public ItemWriter<User> writerWithLogging(JdbcBatchItemWriter<User> writer) {
         return items -> {
-            log.info("Thread {} wrote {} records in this chunk",
-                    Thread.currentThread().getName(),
-                    items.size());
-            writer.write(items); // actual DB write happens here
+            try {
+                log.info("Thread {} wrote {} records in this chunk",
+                        Thread.currentThread().getName(),
+                        items.size());
+                writer.write(items); // actual DB write happens here
+            } catch (Exception e) {
+                System.out.println("ERROR WRITING ITEMS: " + e.getMessage());
+                e.printStackTrace();
+                throw e;
+            }
         };
     }
 }

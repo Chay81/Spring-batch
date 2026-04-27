@@ -11,7 +11,7 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.FileSystemResource;
 
 import javax.sql.DataSource;
 
@@ -22,13 +22,13 @@ public class UserItemReaderConfig {
 
     private final DataSource dataSource;
 
-    @Bean
     @StepScope
+    @Bean
     public FlatFileItemReader<User> reader(
-            @Value("#{stepExecutionContext['file']}") Resource resource){
+            @Value("#{stepExecutionContext['file']}") String fileName) {
 
         FlatFileItemReader<User> reader = new FlatFileItemReader<>();
-        reader.setResource(resource);
+        reader.setResource(new FileSystemResource(fileName));
         reader.setStrict(false);
         reader.setLinesToSkip(1);
 
@@ -47,7 +47,7 @@ public class UserItemReaderConfig {
         // LOGGING (this is your proof of partitioning)
         log.info("Thread: {} Processing File Range: {}",
                 Thread.currentThread().getName(),
-                resource.getFilename());
+                fileName);
 
         return reader;
     }
