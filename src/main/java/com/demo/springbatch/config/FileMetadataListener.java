@@ -52,7 +52,7 @@ public class FileMetadataListener implements StepExecutionListener {
             repository.findByFileName(fileName).ifPresent(meta -> {
                 meta.setEndTime(LocalDateTime.now());
 
-                if (stepExecution.getStatus().isUnsuccessful()) {
+                if (stepExecution.getStatus() == BatchStatus.FAILED) {
                     meta.setStatus("FAILED");
                 } else {
                     meta.setStatus("COMPLETED");

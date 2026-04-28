@@ -11,10 +11,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -40,8 +37,10 @@ public class FilePartitioner implements Partitioner {
                 String filePath = resource.getFile().getAbsolutePath();
                 String fileName = resource.getFilename();
 
-                // CREATE METADATA ENTRY
-                if (repository.findByFileName(fileName).isEmpty()) {
+                Optional<FileMetadata> existing = repository.findByFileName(fileName);
+
+                // ==== RETRY + FILTER LOGIC START =====
+                if (existing.isEmpty()) {
                     FileMetadata meta = new FileMetadata();
                     meta.setFileName(fileName);
                     meta.setStatus("NEW");
@@ -50,23 +49,32 @@ public class FilePartitioner implements Partitioner {
                     meta.setUpdatedAt(LocalDateTime.now());
                     repository.save(meta);
 
+                    log.info("NEW file added: {}", fileName);
+
+                } else if ("FAILED".equals(existing.get().getStatus())) {
+
+                    // RETRY FAILED FILE
+                    log.info("Retrying FAILED file: {}", fileName);
+
+                } else {
+                    // SKIP COMPLETED FILE
+                    log.info("Skipping already processed file: {}", fileName);
+                    continue; // VERY IMPORTANT
                 }
+                // ===== RETRY + FILTER LOGIC END =====
 
                 ExecutionContext context = new ExecutionContext();
-
                 context.putString("file", filePath); // String (IMPORTANT FIX)
-
                 partitions.put("partition" + i, context);
 
+                log.info("Partition {} created for file: {}", "partition" + i, fileName);
                 i++;
 
-                log.info("NEW file added: {}", fileName);
-
             } catch (Exception e) {
-                throw new RuntimeException("Error reading file", e);
+                throw new RuntimeException("Error reading file: " + resource.getFilename(), e);
             }
         }
-
+        log.info("Total partitions created: {}", partitions.size());
         return partitions;
     }
 }

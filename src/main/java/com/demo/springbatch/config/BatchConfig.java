@@ -73,11 +73,10 @@ public class BatchConfig {
                 .listener(skipListener)   // move file after processing
                 .listener(fileStepListener) // update file metadata
                 .faultTolerant()
-                .skip(Exception.class) // catch all exceptions to prevent job failure
-                .skipLimit(100000)
                 .skip(DataIntegrityViolationException.class)
                 .skip(FlatFileParseException.class)
                 .skip(IncorrectTokenCountException.class)
+                .skipLimit(100000)
                 .build();
     }
 
