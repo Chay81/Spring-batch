@@ -1,0 +1,223 @@
+# Final Commit
+
+# Spring Batch Scalable File Processing System
+
+# Description
+A production-grade Spring Batch application for processing large CSV files using parallel partitioning, metadata tracking, and idempotent data ingestion.
+The system supports multi-threaded file processing, duplicate filtering, retry mechanisms for failed jobs, and real-time metrics monitoring.
+
+## Features
+- Parallel file processing using Spring Batch partitioning
+- Multi-file ingestion (CSV → Database)
+- Retry mechanism for failed files
+- File-level metadata tracking (status, counts, timestamps)
+- Metrics integration with Prometheus
+- Duplicate record filtering (idempotent processing)
+- Chunk-based high-performance processing (1M+ records tested)
+- Automatic file archival after processing
+
+## Architecture
+
+Input Files (CSV)
+        ↓
+File Partitioner (creates partitions per file)
+        ↓
+Parallel Processing (Thread Pool)
+        ↓
+Reader → Processor → Writer
+        ↓
+Database (Users Table)
+        ↓
+Metadata Table (file_metadata)
+        ↓
+File Archival (input → archive)
+
+
+## Tech Stack
+
+- Java 17+
+- Spring Boot
+- Spring Batch
+- Spring Data JPA
+- PostgreSQL
+- Micrometer + Prometheus
+- Maven
+
+## How It Works
+1. The system scans the input directory for CSV files.
+2. Each file is assigned to a separate partition.
+3. Files are processed in parallel using multiple threads.
+4. Data is read, validated, and written to the database in chunks.
+5. Duplicate records are filtered during processing.
+6. Metadata is updated for each file:
+   - Start Time
+   - End Time
+   - Status (NEW, COMPLETED, FAILED)
+   - Record Count
+7. Processed files are moved to an archive directory.
+8. Failed files are retried automatically in the next run.
+
+## Sample Execution
+- Total Records Processed: 1,000,000
+- Records Inserted: 999,981
+- Duplicates Skipped: 19
+- Files Processed: 4
+- Processing Time: ~20 seconds
+- Threads Used: 4+
+
+
+## Tables
+### users
+Stores processed user records.
+
+### file_metadata
+Tracks file processing status:
+- file_name
+- status (NEW, COMPLETED, FAILED)
+- record_count
+- start_time
+- end_time
+
+
+## Run the Application
+
+1. Place CSV files in:
+   ./input/
+
+2. Configure DB in application.yml
+
+3. Run:
+   mvn spring-boot:run
+
+4. Trigger job:
+   POST /run-job
+
+
+## Retry Mechanism
+- Files with status FAILED are retried automatically
+- COMPLETED files are skipped
+- Duplicate records are safely ignored during retries
+
+
+## Metrics
+Exposed via:
+- /actuator/prometheus
+
+Includes:
+- Total DB writes
+- Writes per thread
+- Active threads
+- Unique threads used
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+###### Retry Simulation 
+
+### DB Queries
+select count(*) from users;
+SELECT * FROM file_metadata;
+SELECT file_name, record_count FROM file_metadata;
+SELECT file_name, status FROM file_metadata;
+
+
+## Normal Behaviour response from DB
+
+select count(*) from users;
+
+COUNT(*)  
+999981
+(1 row, 4 ms)
+
+SELECT * FROM file_metadata;
+
+ID  	CREATED_AT  	END_TIME  	FILE_NAME  	RECORD_COUNT  	START_TIME  	STATUS  	UPDATED_AT  
+1	2026-04-28 14:28:58.613812	2026-04-28 14:29:15.519836	users_1.csv	249990	2026-04-28 14:28:58.890149	COMPLETED	2026-04-28 14:29:15.305911
+2	2026-04-28 14:28:58.749916	2026-04-28 14:29:15.836456	users_2.csv	250000	2026-04-28 14:28:58.890149	COMPLETED	2026-04-28 14:29:15.792588
+3	2026-04-28 14:28:58.757988	2026-04-28 14:29:15.807951	users_3.csv	250000	2026-04-28 14:28:58.890149	COMPLETED	2026-04-28 14:29:15.744962
+4	2026-04-28 14:28:58.763962	2026-04-28 14:29:15.519836	users_4.csv	249991	2026-04-28 14:28:58.892342	COMPLETED	2026-04-28 14:29:15.330456
+(4 rows, 1 ms)
+
+SELECT file_name, record_count FROM file_metadata;
+
+FILE_NAME  	RECORD_COUNT  
+users_1.csv	249990
+users_2.csv	250000
+users_3.csv	250000
+users_4.csv	249991
+(4 rows, 0 ms)
+
+SELECT file_name, status FROM file_metadata;
+
+FILE_NAME  	STATUS  
+users_1.csv	COMPLETED
+users_2.csv	COMPLETED
+users_3.csv	COMPLETED
+users_4.csv	COMPLETED
+(4 rows, 0 ms)
+
+## Behaviour after retries and failure
+
+#### First run
+---------------
+
+select count(*) from users;
+COUNT(*)  
+749981
+(1 row, 5 ms)
+
+SELECT * FROM file_metadata;
+ID  	CREATED_AT  	END_TIME  	FILE_NAME  	RECORD_COUNT  	START_TIME  	STATUS  	UPDATED_AT  
+1	2026-04-28 14:53:46.079274	2026-04-28 14:54:01.108126	users_1.csv	249990	2026-04-28 14:53:46.308794	COMPLETED	2026-04-28 14:54:01.071921
+2	2026-04-28 14:53:46.193608	2026-04-28 14:53:48.280522	users_2.csv	0	2026-04-28 14:53:46.31079	FAILED	2026-04-28 14:53:46.193608
+3	2026-04-28 14:53:46.203618	2026-04-28 14:54:00.895447	users_3.csv	250000	2026-04-28 14:53:46.31079	COMPLETED	2026-04-28 14:54:00.847105
+4	2026-04-28 14:53:46.21102	2026-04-28 14:54:01.059899	users_4.csv	249991	2026-04-28 14:53:46.309789	COMPLETED	2026-04-28 14:54:01.002382
+(4 rows, 3 ms)
+
+SELECT file_name, record_count FROM file_metadata;
+FILE_NAME  	RECORD_COUNT  
+users_1.csv	249990
+users_2.csv	0
+users_3.csv	250000
+users_4.csv	249991
+(4 rows, 0 ms)
+
+SELECT file_name, status FROM file_metadata;
+FILE_NAME  	STATUS  
+users_1.csv	COMPLETED
+users_2.csv	FAILED
+users_3.csv	COMPLETED
+users_4.csv	COMPLETED
+(4 rows, 1 ms)
+
+
+#### Second run
+---------------
+
+select count(*) from users;
+COUNT(*)  
+999982
+(1 row, 7 ms)
+
+SELECT * FROM file_metadata;
+ID  	CREATED_AT  	END_TIME  	FILE_NAME  	RECORD_COUNT  	START_TIME  	STATUS  	UPDATED_AT  
+1	2026-04-28 14:59:06.356543	2026-04-28 14:59:23.613977	users_1.csv	249990	2026-04-28 14:59:06.660723	COMPLETED	2026-04-28 14:59:23.563986
+2	2026-04-28 14:59:06.498962	2026-04-28 14:59:23.455625	users_2.csv	250001	2026-04-28 14:59:06.660723	COMPLETED	2026-04-28 14:59:23.447463
+3	2026-04-28 14:59:06.50696	2026-04-28 14:59:23.598977	users_3.csv	250000	2026-04-28 14:59:06.660723	COMPLETED	2026-04-28 14:59:23.547151
+4	2026-04-28 14:59:06.512961	2026-04-28 14:59:23.109906	users_4.csv	249991	2026-04-28 14:59:06.661722	COMPLETED	2026-04-28 14:59:22.956157
+(4 rows, 2 ms)
+
+SELECT file_name, record_count FROM file_metadata;
+FILE_NAME  	RECORD_COUNT  
+users_1.csv	249990
+users_2.csv	250001
+users_3.csv	250000
+users_4.csv	249991
+(4 rows, 1 ms)
+
+SELECT file_name, status FROM file_metadata;
+FILE_NAME  	STATUS  
+users_1.csv	COMPLETED
+users_2.csv	COMPLETED
+users_3.csv	COMPLETED
+users_4.csv	COMPLETED
+(4 rows, 0 ms)

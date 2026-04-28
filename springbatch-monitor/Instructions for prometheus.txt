@@ -1,0 +1,54 @@
+I have created a folder in c drive called springbatch-monitor, and saved prometheus.yml and docker-compose.yml for spring batch project.
+
+Note: do not use docker compose, stop Prometheus command is docker stop prometheus, [The reason we need to shut the Prometheus there can be multiple Prometheus id's we have created for each spring boot project, we can even run docker compose, command is docker compose up/down. Use ctrl +c to stop the terminal	]
+then delete it docker rm Prometheus 
+and start with 
+docker run -d --name prometheus -p 9090:9090 -v C:\springbatch-monitor\prometheus.yml:/etc/prometheus/prometheus.yml prom/Prometheus or
+use docker start Prometheus 
+
+Prometheus: http://localhost:9090
+Check Prometheus metrics: http://localhost:9090
+Query:
+batch_duplicates_skipped_total
+
+You’ll see per-thread counts.
+
+search in actuator with http://localhost:8081/actuator/metrics/batch.duplicates.skipped 
+but in Prometheus it will convert to batch_duplicates_skipped. 
+In actuator/Prometheus end point if we search with batch_duplicates_skipped, we will get the exact query we need to search in Prometheus dashboard which will be batch_duplicates_skipped_total in this project.
+
+Check Prometheus: http://localhost:9090
+Query metric: batch_duplicates_skipped_total
+
+Note: if there are no duplicates, then the metrics wont work as it is created to capture duplicates
+
+These are for normal hits to db counting the threads and giving the information, we created to make sure we just don't focus on duplicates, but also on those that are important. Below are actuator endpoints
+
+/actuator/metrics/batch_db_writes_total - working
+/actuator/metrics/batch_db_writes_by_thread - working
+/actuator/metrics/batch.active.threads - working
+/actuator/metrics/batch.unique.threads - working
+
+and these are Prometheus queries
+
+batch_db_writes_total
+batch_db_writes_by_thread_total
+batch_active_threads
+batch_unique_threads
+
+
+Note: we have a folder "input" where the users.csv is split into 4 partitions using CSVGenerator class, these partitions are inserted into DB.
+To check if the portioning is working use below steps
+
+we will see batch-thread-* logs in the console/actuator with the metrics given above.
+The logs in console will look like below.
+
+Logs in console
+---------------
+Metrics Writer HIT by thread: batch-thread-1
+Thread: batch-thread-4 Writing 9991 records
+Skipping duplicate: user999990@test.com | duplicate count: 19 | thread: batch-thread-4
+Step: [loadCsvStep:partition3] executed in 19s2ms
+
+
+
