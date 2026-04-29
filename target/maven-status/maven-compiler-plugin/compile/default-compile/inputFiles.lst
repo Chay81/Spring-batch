@@ -2,7 +2,9 @@ C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\config\BatchSharedConfig.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\config\DuplicateSkippingProcessor.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\config\FailureControlListener.java
-C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\config\FileMoveListener.java
+C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\config\FileMetadataListener.java
+C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\config\FileMoveTasklet.java
+C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\config\FilePartitioner.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\config\JobMetricsListener.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\config\UserItemProcessorConfig.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\config\UserRowMapper.java
@@ -10,8 +12,10 @@ C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\exceptions\GlobalExceptionHandler.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\exceptions\NoFileFoundException.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\model\ApiResponse.java
+C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\model\FileMetadata.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\model\User.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\reader\UserItemReaderConfig.java
+C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\repository\FileMetadataRepository.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\repository\UserRepository.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\runner\CsvGenerator.java
 C:\Users\Chavi\Documents\workspace-spring-tool-suite-4.31.0.RELEASE\springbatch\src\main\java\com\demo\springbatch\runner\UserJobConfig.java

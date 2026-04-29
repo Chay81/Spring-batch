@@ -3,7 +3,7 @@ I have created a folder in c drive called springbatch-monitor, and saved prometh
 Note: do not use docker compose, stop Prometheus command is docker stop prometheus, [The reason we need to shut the Prometheus there can be multiple Prometheus id's we have created for each spring boot project, we can even run docker compose, command is docker compose up/down. Use ctrl +c to stop the terminal	]
 then delete it docker rm Prometheus 
 and start with 
-docker run -d --name prometheus -p 9090:9090 -v C:\springbatch-monitor\prometheus.yml:/etc/prometheus/prometheus.yml prom/Prometheus or
+docker run -d --name prometheus -p 9090:9090 -v C:\springbatch-monitor\prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus or
 use docker start Prometheus 
 
 Prometheus: http://localhost:9090

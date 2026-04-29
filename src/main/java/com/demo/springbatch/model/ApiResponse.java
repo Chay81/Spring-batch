@@ -1,3 +1,6 @@
 package com.demo.springbatch.model;
 
-public record ApiResponse(String message) {}
+import java.util.List;
+
+public record ApiResponse(String message, List<String> failedFiles) {
+}

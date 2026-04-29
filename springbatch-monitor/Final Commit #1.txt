@@ -1,0 +1,176 @@
+###### Final Commit #1 
+# Using MySQL as DB instead of h2 DB
+
+### Important Note:
+1. Remember to move back files from archive to input manually to test normal behaviour after success for normal, move back the files for retry simulation.
+2. Remember to un-comment the lines in DuplicateSkippingProcessor class to test the simulation for first run 
+and then comment back the lines for second run.
+3. Most important, remember to truncate users and file_metadata in MySQL after every run [Only in case of normal behaviour not while doing retry simulation. It will inconsistent response in DB and console].
+4. One entry in users2.csv has been added to test retry simulation. Do not change it
+5. Always restart the app from IntelliJ and then make the api call from postman
+6. After the first run generates the desired response given below, comment the lines in DuplicateSkippingProcessor class, restart the app and then make the api call from postman.
+7. All the above steps have to completed before running the application.
+
+API URI
+Method: Post
+URI: localhost:8081/job/run
+
+
+### DB Queries
+use spring_batch_db;
+
+select count(*) from users;
+truncate users;
+SELECT * FROM file_metadata;
+truncate file_metadata;
+SELECT file_name, record_count FROM file_metadata;
+SELECT file_name, status FROM file_metadata;
+
+Use the above queries and testing in MySQL db for consistent db response as h2 in memory resets after restart of the app. 
+Added FileStepListener class for better monitoring.
+
+
+## Normal Behaviour response from DB
+
+# App console logs:
+
+Processing file: users_1.csv with status: COMPLETED
+Processing file: users_2.csv with status: COMPLETED
+Processing file: users_3.csv with status: COMPLETED
+Processing file: users_4.csv with status: COMPLETED
+
+Response in Postman
+{
+    "message": "Job Completed Successfully. No failed files.",
+    "failedFiles": []
+}
+
+
+# DB Queries response:
+select count(*) from users;
+count(*)
+999982
+
+SELECT * FROM file_metadata;
+# id, created_at,                     end_time,                   file_name, record_count, start_time,                   status,     updated_at
+'1', '2026-04-29 11:41:00.842255', '2026-04-29 11:43:27.673150', 'users_1.csv', '249990', '2026-04-29 11:41:01.355827', 'COMPLETED', '2026-04-29 11:43:27.656902'
+'2', '2026-04-29 11:41:00.985305', '2026-04-29 11:43:29.095643', 'users_2.csv', '250001', '2026-04-29 11:41:01.355827', 'COMPLETED', '2026-04-29 11:43:29.081559'
+'3', '2026-04-29 11:41:01.016713', '2026-04-29 11:43:28.353035', 'users_3.csv', '250000', '2026-04-29 11:41:01.355827', 'COMPLETED', '2026-04-29 11:43:28.342592'
+'4', '2026-04-29 11:41:01.033125', '2026-04-29 11:43:28.187481', 'users_4.csv', '249991', '2026-04-29 11:41:01.355827', 'COMPLETED', '2026-04-29 11:43:28.165603'
+
+SELECT file_name, record_count FROM file_metadata;
+# file_name, record_count
+'users_1.csv', '249990'
+'users_2.csv', '250001'
+'users_3.csv', '250000'
+'users_4.csv', '249991'
+
+SELECT file_name, status FROM file_metadata;
+# file_name, status
+'users_1.csv', 'COMPLETED'
+'users_2.csv', 'COMPLETED'
+'users_3.csv', 'COMPLETED'
+'users_4.csv', 'COMPLETED'
+
+
+## Behaviour after retries and failure
+
+
+#### First run
+---------------
+# Retry simulation monitored with app console logs:
+
+# App console logs:
+
+Processing file: users_1.csv with status: COMPLETED
+FORCING FAILURE for email: fail@test.com and name: test
+Simulated failure for testing retry
+Job finished with failures: [users_2.csv]
+Processing file: users_2.csv with status: FAILED
+Processing file: users_3.csv with status: COMPLETED
+Processing file: users_4.csv with status: COMPLETED
+
+Response in Postman
+{
+    "message": "Partial success",
+    "failedFiles": [
+        "users_2.csv"
+    ]
+}
+
+# DB Queries response:
+select count(*) from users;
+# count(*)
+749981
+
+SELECT * FROM file_metadata;
+# id, created_at, 			end_time, 		  file_name, record_count, 	start_time, 		status,     updated_at
+'1', '2026-04-29 11:56:37.439267', '2026-04-29 11:59:08.954005', 'users_1.csv', '249990', '2026-04-29 11:56:37.901543', 'COMPLETED', '2026-04-29 11:59:08.941718'
+'2', '2026-04-29 11:56:37.544318', '2026-04-29 11:56:39.609737', 'users_2.csv', '0', '2026-04-29 11:56:37.901543', 'FAILED', '2026-04-29 11:56:39.583512'
+'3', '2026-04-29 11:56:37.559906', '2026-04-29 11:59:09.103816', 'users_3.csv', '250000', '2026-04-29 11:56:37.901543', 'COMPLETED', '2026-04-29 11:59:09.090169'
+'4', '2026-04-29 11:56:37.577528', '2026-04-29 11:59:07.752028', 'users_4.csv', '249991', '2026-04-29 11:56:37.901543', 'COMPLETED', '2026-04-29 11:59:07.732661'
+
+
+SELECT file_name, record_count FROM file_metadata;
+# file_name, record_count
+'users_1.csv', '249990'
+'users_2.csv', '0'
+'users_3.csv', '250000'
+'users_4.csv', '249991'
+
+
+SELECT file_name, status FROM file_metadata;
+# file_name, status
+'users_1.csv', 'COMPLETED'
+'users_2.csv', 'FAILED'
+'users_3.csv', 'COMPLETED'
+'users_4.csv', 'COMPLETED'
+
+
+#### Second run
+---------------
+# App console logs:
+
+Skipping already processed file: users_1.csv
+Retrying FAILED file: users_2.csv
+Processing file: users_2.csv with status: COMPLETED
+Job completed successfully
+Skipping already processed file: users_3.csv
+Skipping already processed file: users_4.csv
+
+Response in Postman
+{
+    "message": "Job Completed Successfully. No failed files.",
+    "failedFiles": null
+}
+
+
+# DB Queries response:
+select count(*) from users;
+# count(*)
+'999982'
+
+
+SELECT * FROM file_metadata;
+# id, created_at, 			end_time, 		  file_name, record_count, start_time, 			status,      updated_at
+'1', '2026-04-29 11:56:37.439267', '2026-04-29 11:59:08.954005', 'users_1.csv', '249990', '2026-04-29 11:56:37.901543', 'COMPLETED', '2026-04-29 11:59:08.941718'
+'2', '2026-04-29 11:56:37.544318', '2026-04-29 12:11:20.414381', 'users_2.csv', '250001', '2026-04-29 12:08:47.396955', 'COMPLETED', '2026-04-29 12:11:20.396352'
+'3', '2026-04-29 11:56:37.559906', '2026-04-29 11:59:09.103816', 'users_3.csv', '250000', '2026-04-29 11:56:37.901543', 'COMPLETED', '2026-04-29 11:59:09.090169'
+'4', '2026-04-29 11:56:37.577528', '2026-04-29 11:59:07.752028', 'users_4.csv', '249991', '2026-04-29 11:56:37.901543', 'COMPLETED', '2026-04-29 11:59:07.732661'
+
+
+SELECT file_name, record_count FROM file_metadata;
+# file_name, record_count
+'users_1.csv', '249990'
+'users_2.csv', '250001'
+'users_3.csv', '250000'
+'users_4.csv', '249991'
+
+
+SELECT file_name, status FROM file_metadata;
+# file_name, record_count
+'users_1.csv', '249990'
+'users_2.csv', '250001'
+'users_3.csv', '250000'
+'users_4.csv', '249991'
+

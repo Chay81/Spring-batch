@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.List;
+
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
@@ -16,7 +18,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .badRequest()
-                .body(new ApiResponse(ex.getMessage()));
+                .body(new ApiResponse(ex.getMessage(), List.of()));
     }
 
     @ExceptionHandler(Exception.class)
@@ -26,6 +28,6 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiResponse("Something went wrong"));
+                .body(new ApiResponse(ex.getMessage(), List.of()));
     }
 }

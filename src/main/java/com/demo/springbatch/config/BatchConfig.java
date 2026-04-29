@@ -21,6 +21,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.lang.NonNull;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -49,8 +50,8 @@ public class BatchConfig {
     public SkipListener<User, User> skipListener() {
         return new SkipListener<>() {
             @Override
-            public void onSkipInWrite(User item, Throwable t) {
-                System.out.println("❌ Skipped record: " + item + " | Reason: " + t.getMessage());
+            public void onSkipInWrite(@NonNull User item,@NonNull Throwable t) {
+                System.out.println("Skipped record: " + item + " | Reason: " + t.getMessage());
             }
         };
     }
@@ -63,7 +64,8 @@ public class BatchConfig {
                             DuplicateSkippingProcessor processor,
                             ItemWriter<User> metricsItemWriter,
                             SkipListener <User, User> skipListener,
-                            FileMetadataListener fileStepListener){
+                            FileMetadataListener fileMetadataListener,
+                            FileStepListener fileStepListener) {
 
         return new StepBuilder("loadCsvStep", jobRepository)
                 .<User, User>chunk(10000, txManager)// for testing with 1 million records
@@ -71,7 +73,8 @@ public class BatchConfig {
                 .processor(processor)
                 .writer(metricsItemWriter)     // insert into DB
                 .listener(skipListener)   // move file after processing
-                .listener(fileStepListener) // update file metadata
+                .listener(fileMetadataListener) // update file metadata
+                .listener(fileStepListener) // update file log status
                 .faultTolerant()
                 .skip(DataIntegrityViolationException.class)
                 .skip(FlatFileParseException.class)

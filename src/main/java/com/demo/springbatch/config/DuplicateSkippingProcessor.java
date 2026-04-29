@@ -8,7 +8,6 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Component
@@ -25,8 +24,7 @@ public class DuplicateSkippingProcessor implements ItemProcessor<User, User> {
     public User process(User item) {
         // Simulate failure for testing retry logic
 //        if (item.getEmail() != null && item.getEmail().contains("fail@test.com")) {
-//            log.info("Processing email: {}", item.getEmail());
-//            log.error("FORCING FAILURE for item: {}", item);
+//            log.error("FORCING FAILURE for email: {} and name: {}", item.getEmail(), item.getName());
 //            throw new RuntimeException("Simulated failure for testing retry");
 //        }
 
