@@ -10,7 +10,7 @@ and then comment back the lines for second run.
 5. Always restart the app from IntelliJ and then make the api call from postman
 6. After the first run generates the desired response given below, comment the lines in DuplicateSkippingProcessor class, restart the app and then make the api call from postman.
 7. For http://localhost:8081/actuator/metrics/batch.duplicates.skipped endpoint to work, place the springbatch-folder in c drive and follow the instructions given inside for Prometheus to run. Make sure that Prometheus is running in docker machine.
-7. All the above steps have to be completed before running the application.
+8. All the above steps have to be completed before running the application.
 
 API URI
 Method: Post
